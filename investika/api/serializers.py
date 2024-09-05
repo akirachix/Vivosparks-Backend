@@ -7,11 +7,5 @@ class UserSerialzer(serializers.ModelSerializer):
      class Meta:
          model=User
          fields=['email','username','password']
-     def create (self,validates_data):
-         password= validates_data.pop('password',None)
-         user =User(**validates_data)
-         if password:
-             user.set_password(password)
-             user.save()
-             return user
+     
         

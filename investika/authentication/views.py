@@ -40,21 +40,6 @@ def logout(request):
 def check_existing_email(email):
     return User.objects.filter(email=email).exists()
 
-# def index(request):
-#     user = request.session.get("user")
-#     if not user:
-#         return redirect(reverse("login"))
-#     email = user ['email']
-#     if not check_existing_email(email):
-#         return HttpResponse("user does not exist")
-#     return render(
-#         request,
-#         "login/index.html",
-#         context={
-#             "session": user,
-#             "pretty": json.dumps(request.session.get("user"), indent=4),
-#         },
-#     )
 
 def index(request):
     user = request.session.get("user")
