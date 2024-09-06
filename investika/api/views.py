@@ -1,75 +1,87 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth import authenticate
-from users.models import User
-from .serializers import UserSerializer
-import logging
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from .serializers import UserSerializer, ChangePasswordSerializer, RegisterSerializer
 
-# Initialize logger
-logger = logging.getLogger(__name__)
-
-class UserView(APIView):
-    
-    # Handle POST request to create a new user
+class ChangePasswordView(APIView):
     def post(self, request):
-        logger.info('POST request received to create a new user.')
-        serializer = UserSerializer(data=request.data)
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            if not user.check_password(serializer.validated_data.get("old_password")):
+                return Response({"error": "Incorrect old password."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.set_password(serializer.validated_data.get("new_password"))
+            user.save()
+            return Response({"message": "Password changed successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            logger.info('New user created successfully.')
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            logger.warning('Failed to create user: %s', serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    # Handle GET request to retrieve the authenticated user's details
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return Response({"message": "Logged in successfully."}, status=status.HTTP_200_OK)
+        return Response({"error": "Invalid credentials."}, status=status.HTTP_400_BAD_REQUEST)
+
+class LogoutView(APIView):
+    def post(self, request):
+        logout(request)
+        return Response({"message": "Logged out successfully."}, status=status.HTTP_200_OK)
+
+class UserListView(APIView):
     def get(self, request):
-        logger.info('GET request received to retrieve user details.')
-        user = request.user
-        serializer = UserSerializer(user)
-        logger.info('User details retrieved successfully.')
-        return Response(serializer.data)
-    
-    # Create user instance with password handling
-    def create(self, validated_data):
-        logger.info('Creating a user instance with password handling.')
-        password = validated_data.pop('password', None)
-        user = User(**validated_data)
-        if password:
-            user.set_password(password)
-            logger.info('Password set successfully for the user.')
-        user.save()
-        logger.info('User instance saved successfully.')
-        return user
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserDetailView(APIView):
-    
-    # Handle GET request to retrieve user by ID
     def get(self, request, id):
-        logger.info('GET request received to retrieve user with ID: %s', id)
-        user = User.objects.get(id=id)
-        serializer = UserSerializer(user)
-        logger.info('User with ID %s retrieved successfully.', id)
-        return Response(serializer.data)
-    
-    # Handle PATCH request to update user details partially
-    def patch(self, request, id):
-        logger.info('PATCH request received to update user with ID: %s', id)
-        user = User.objects.get(id=id)
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            logger.info('User with ID %s updated successfully.', id)
-            return Response(serializer.data)
-        else:
-            logger.warning('Failed to update user with ID %s: %s', id, serializer.errors)
+        try:
+            user = User.objects.get(id=id)
+            serializer = UserSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, id):
+        try:
+            user = User.objects.get(id=id)
+            serializer = UserSerializer(user, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Handle DELETE request to delete user by ID
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, id):
+        try:
+            user = User.objects.get(id=id)
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
     def delete(self, request, id):
-        logger.info('DELETE request received to delete user with ID: %s', id)
-        user = User.objects.get(id=id)
-        user.delete()
-        logger.info('User with ID %s deleted successfully.', id)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            user = User.objects.get(id=id)
+            user.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)

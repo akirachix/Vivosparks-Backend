@@ -146,6 +146,6 @@ AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
 AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
 
-REDIRECT_URI = 'http://localhost:8080/auth/callback/'
+REDIRECT_URI = 'http://localhost:800co0/auth/callback/'
 
-REDIRECT_URI = 'http://localhost:8080/auth/'
+REDIRECT_URI = 'http://localhost:8000/auth/'
