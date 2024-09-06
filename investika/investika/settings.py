@@ -21,17 +21,20 @@ TEMPLATES_DIR= os.path.join(BASE_DIR,'Investika','templates')
 
 
 
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+
 SECRET_KEY = 'django-insecure-x)zg22d7g3e7n@*psb(%lzeb*x8*v3f3hy76_#u0*6zo#c73j2'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1']
 
+ALLOWED_HOSTS = ['localhost','127.0.0.1']
 
 # Application definition
 
@@ -47,10 +50,6 @@ INSTALLED_APPS = [
     'users'
 ]
 
-AUTHENTICATION_BACKENDS= [
-    'path.to.Auth0Backend',
-    'django.contrib.auth.backends.ModelBackend',
-]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,7 +67,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [TEMPLATES_DIR],
-        'APP_DIRS': True,
+   'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -134,7 +133,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ENV_FILE =find_dotenv()
