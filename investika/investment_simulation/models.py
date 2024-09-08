@@ -7,7 +7,7 @@ class InvestmentSimulation(models.Model):
     amount_invested = models.DecimalField(decimal_places=2, max_digits=10)
     investment_date = models.DateTimeField(auto_now_add=True)
     outcome = models.CharField(max_length=10)
-    profit_loss = models.DecimalField(decimal_places=2, max_digits=10)  # Ensure this field is included
+    profit_loss = models.DecimalField(decimal_places=2, max_digits=10) 
 
     def soft_delete(self):
         self.is_active = False

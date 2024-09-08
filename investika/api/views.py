@@ -59,7 +59,7 @@ class MarketDetailView(APIView):
     def get(self, request, market_id):
         try:
             logger.info(f"Fetching market with ID: {market_id}")
-            market = Market.objects.get(id=market_id, is_active=True)
+            market = Market.objects.get(market_id=market_id, is_active=True)
             serializer = MarketSerializer(market)
             return Response(serializer.data)
         except Market.DoesNotExist:
@@ -70,7 +70,7 @@ class MarketDetailView(APIView):
     def put(self, request, market_id):
         try:
             logger.info(f"Updating market with ID: {market_id}")
-            market = Market.objects.get(id=market_id, is_active=True)
+            market = Market.objects.get(market_id = market_id, is_active=True)
             serializer = MarketSerializer(market, data=request.data)
             if serializer.is_valid():
                 serializer.save()
@@ -86,7 +86,7 @@ class MarketDetailView(APIView):
     def delete(self, request, market_id):
         try:
             logger.info(f"Attempting to deactivate (soft delete) market with ID: {market_id}")
-            market = Market.objects.get(id=market_id, is_active=True)
+            market = Market.objects.get(market_id = market_id, is_active=True)
             market.is_active = False
             market.save()
             logger.info(f"Market with ID {market_id} deactivated successfully")
@@ -131,7 +131,7 @@ class InvestmentSimulationDetailView(APIView):
     def get(self, request, simulation_id):
         try:
             logger.info(f"Fetching investment simulation with ID: {simulation_id}")
-            simulation = InvestmentSimulation.objects.get(id=simulation_id)
+            simulation = InvestmentSimulation.objects.get(simulation_id = simulation_id)
             serializer = InvestmentSimulationSerializer(simulation)
             return Response(serializer.data)
         except InvestmentSimulation.DoesNotExist:
@@ -141,7 +141,7 @@ class InvestmentSimulationDetailView(APIView):
     def put(self, request, simulation_id):
         try:
             logger.info(f"Updating investment simulation with ID: {simulation_id}")
-            simulation = InvestmentSimulation.objects.get(id=simulation_id)
+            simulation = InvestmentSimulation.objects.get(simulation_id=simulation_id)
             serializer = InvestmentSimulationSerializer(simulation, data=request.data)
             if serializer.is_valid():
                 serializer.save()
@@ -157,7 +157,7 @@ class InvestmentSimulationDetailView(APIView):
     def delete(self, request, simulation_id):
         try:
             logger.info(f"Attempting to soft delete investment simulation with ID: {simulation_id}")
-            simulation = InvestmentSimulation.objects.get(id=simulation_id)
+            simulation = InvestmentSimulation.objects.get(simulation_id=simulation_id)
             simulation.is_active = True
             simulation.save()
             logger.info(f"Investment simulation with ID {simulation_id} soft deleted successfully")
