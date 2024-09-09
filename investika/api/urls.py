@@ -1,10 +1,8 @@
 from django.urls import path
-from .views import MarketListView, MarketDetailView, InvestmentSimulationListView, InvestmentSimulationDetailView
-from django.urls import path
+from .views import MarketListView, MarketDetailView
+from .views import InvestmentSimulationListView, InvestmentSimulationDetailView
 from .views import QuizView, QuizDetailView, QuizResultView, QuizResultDetailView
-from django.urls import path
 from .views import AssessmentDetailView, AssessmentListView
-from django.urls import path
 from .views import RegisterView, UserListView, UserDetailView
 
 urlpatterns = [
