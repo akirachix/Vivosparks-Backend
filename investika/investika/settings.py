@@ -44,14 +44,15 @@ INSTALLED_APPS = [
     'authentication',
     'users',
     'api',
+    'authlib',
 
 ]
 
 AUTHENTICATION_BACKENDS= [
     'path.to.Auth0Backend',
+    'users.backends.EmailAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -125,6 +126,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+AUTH_USER_MODEL = 'users.User'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -148,6 +150,7 @@ AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
 REDIRECT_URI = 'http://localhost:8000/auth/callback/'
 
 REDIRECT_URI = 'http://localhost:8000/auth/'
+
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 

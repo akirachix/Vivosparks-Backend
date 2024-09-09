@@ -7,7 +7,6 @@ from . import views
  - The `login` view handles user login and redirects them to the Auth0 authentication page.
  - The `logout` view logs the user out and redirects them to the Auth0 logout endpoint.
 - The `callback` view processes the authentication response from Auth0 and handles user session management.
-
 """
 
 urlpatterns = [
