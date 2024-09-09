@@ -22,3 +22,5 @@ vivosparks/
 *.swp
 *.swo
 .env
+__pycache__/
+*.py[cod] 
