@@ -1,7 +1,7 @@
 # api/urls.py
 
 from django.urls import path
-from .views import RegisterView, UserListView, UserDetailView, CompleteProfileView
+from .views import RegisterView, UserListView, UserDetailView
 
 """
 This module defines the URL patterns for user-related API endpoints.
@@ -11,9 +11,9 @@ This module defines the URL patterns for user-related API endpoints.
 - The `CompleteProfileView` is mapped to 'complete-profile/' URL, which handles profile completion after SSO login.
 """
 
+
 urlpatterns = [
-    path('users/', UserListView.as_view(), name='user-list'),
     path('register/', RegisterView.as_view(), name='register'),
+    path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:id>/', UserDetailView.as_view(), name='user-detail'),
-    path('complete-profile/', CompleteProfileView.as_view(), name='complete-profile'),
 ]
