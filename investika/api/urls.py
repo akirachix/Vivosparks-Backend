@@ -4,6 +4,8 @@ from .views import InvestmentSimulationListView, InvestmentSimulationDetailView
 from .views import QuizView, QuizDetailView, QuizResultView, QuizResultDetailView
 from .views import AssessmentDetailView, AssessmentListView
 from .views import RegisterView, UserListView, UserDetailView
+from .views import VirtualMoneyView, VirtualMoneyDetailView
+from .views import AchievementView, AchievementDetailView
 
 urlpatterns = [
     path('markets/', MarketListView.as_view(), name='market-list'),
@@ -19,6 +21,12 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:id>/', UserDetailView.as_view(), name='user-detail'),
+    path('virtualmoney/', VirtualMoneyView.as_view(), name='virtualmoney-list'),
+    path('virtualmoney/<int:id>/', VirtualMoneyDetailView.as_view(), name='virtualmoney-detail'),
+    path('achievements/', AchievementView.as_view(), name='achievement-list'),
+    path('achievements/<int:id>/', AchievementDetailView.as_view(), name='achievement-detail'),
+   
+   
 
 ]
 
