@@ -40,21 +40,23 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'market',
+    'investment_simulation',
     'quizzes',
     'quiz_results',
     'assessment',
-    'rest_framework',
     'authentication',
     'users',
     'api',
     'authlib',
-
 ]
 
 AUTHENTICATION_BACKENDS= [
     'path.to.Auth0Backend',
     'users.backends.EmailAuthBackend',
     'django.contrib.auth.backends.ModelBackend',
+
 ]
 
 MIDDLEWARE = [
