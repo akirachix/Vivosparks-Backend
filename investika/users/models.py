@@ -9,8 +9,18 @@ The `user_id` field is the primary key, and the `__str__` method returns the use
 
 """
 
+GENDER_CHOICES = [
+    ('male', 'Male'),
+    ('female', 'Female'),
+]
 
 
+AVATAR_CHOICES = [
+    ('ShadowClaw', 'ShadowClaw'),
+    ('Thunderwing', 'Thunderwing'),
+    ('MysticFlare', 'MysticFlare'),
+    ('AuroraBreath', 'AuroraBreath'),
+]
 
 class User(models.Model):
     user_id = models.AutoField(primary_key=True)
@@ -18,19 +28,24 @@ class User(models.Model):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=100)
     age = models.IntegerField()
-    gender = models.CharField(max_length=25)
+    gender = models.CharField(
+        max_length=20,
+        choices=GENDER_CHOICES,
+    )
     location = models.CharField(max_length=100)
     income = models.DecimalField(max_digits=10, decimal_places=2)
-    avatar_url = models.URLField(null=True, blank=True)
+
+    avatar = models.CharField(
+        max_length=50,
+        choices=AVATAR_CHOICES,
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    
+
     def soft_delete(self):
         self.is_active = False
         self.save()
-    
 
     def __str__(self):
         return self.username
-
-    
