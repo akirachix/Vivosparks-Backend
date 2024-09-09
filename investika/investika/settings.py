@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'quizzes',
+    'quiz_results',
     'assessment',
     'rest_framework',
     'authentication',
