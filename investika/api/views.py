@@ -2,16 +2,15 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from rest_framework.permissions import IsAuthenticated
-
 from market.models import Market
 from investment_simulation.models import InvestmentSimulation
 from assessment.models import Assessment
 from quizzes.models import Quiz
 from quiz_results.models import QuizResult
+from virtualmoney.models import VirtualMoney
+from .serializers import VirtualMoneySerializer
+from achievements.models import Achievement
 
 from .serializers import (
     MarketSerializer,
@@ -19,7 +18,8 @@ from .serializers import (
     AssessmentSerializer,
     QuizSerializer,
     QuizResultSerializer,
-    UserSerializer
+    UserSerializer,
+    AchievementSerializer,
 )
 
 import logging
@@ -509,3 +509,151 @@ class RegisterView(APIView):
         logger.warning(f"User registration failed: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class VirtualMoneyView(APIView):
+    """
+    Handles creating and listing VirtualMoney instances.
+    """
+
+    def post(self, request):
+        """
+        Create a new VirtualMoney instance.
+        """
+        logger.info('POST request received for VirtualMoney')
+        serializer = VirtualMoneySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info('VirtualMoney created successfully')
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error('Validation errors: %s', serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    """
+    List all VirtualMoney instances.
+    """
+    def get(self, request):
+        """
+        Retrieve a list of all VirtualMoney instances.
+        """
+        logger.info('GET request received for VirtualMoney list')
+        virtual_moneys = VirtualMoney.objects.all()
+        serializer = VirtualMoneySerializer(virtual_moneys, many=True)
+        return Response(serializer.data)
+
+class VirtualMoneyDetailView(APIView):
+    def get(self, request, id):
+        try:
+            virtual_money = VirtualMoney.objects.get(id=id)
+            serializer = VirtualMoneySerializer(virtual_money)
+            return Response(serializer.data)
+        except VirtualMoney.DoesNotExist:
+            return Response({"error": "Virtual Money not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+
+    def patch(self, request, virtual_money_id):
+        try:
+            virtual_money = VirtualMoney.objects.get(virtual_money_id=virtual_money_id)
+            serializer = VirtualMoneySerializer(virtual_money, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except VirtualMoney.DoesNotExist:
+            return Response({"error": "VirtualMoney not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, virtual_money_id):
+        try:
+            virtual_money = VirtualMoney.objects.get(virtual_money_id=virtual_money_id)
+            virtual_money.is_active = False
+            virtual_money.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except VirtualMoney.DoesNotExist:
+            return Response({"error": "VirtualMoney not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class AchievementView(APIView):
+    """
+    Handles creating and listing Achievement instances.
+    """
+
+    def post(self, request):
+        """
+        Create a new Achievement instance.
+        """
+        logger.info('POST request received for Achievement')
+        serializer = AchievementSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info('Achievement created successfully')
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error('Validation errors: %s', serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    """
+    List all Achievement instances.
+    """
+    def get(self, request):
+        """
+        Retrieve a list of all Achievement instances.
+        """
+        logger.info('GET request received for Achievement list')
+        achievements = Achievement.objects.all()
+        serializer = AchievementSerializer(achievements, many=True)
+        return Response(serializer.data)
+
+class AchievementDetailView(APIView):
+    """
+    Handles retrieval, partial update, and soft deletion of a specific Achievement instance by ID.
+    """
+
+    def get(self, request, id):
+        """
+        Retrieve a specific Achievement instance by ID.
+        """
+        logger.info('GET request received for Achievement with ID %s', id)
+        try:
+            achievement = Achievement.objects.get(id=id)
+            serializer = AchievementSerializer(achievement)
+            return Response(serializer.data)
+        except Achievement.DoesNotExist:
+            logger.error('Achievement with ID %s not found', id)
+            return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    """
+    Update a specific Achievement instance by ID.
+    """
+    def patch(self, request, id):
+        """
+        Partially update a specific Achievement instance by ID.
+        """
+        logger.info('PATCH request received for Achievement with ID %s', id)
+        try:
+            achievement = Achievement.objects.get(id=id)
+            serializer = AchievementSerializer(achievement, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                logger.info('Achievement updated successfully')
+                return Response(serializer.data)
+            logger.error('Validation errors: %s', serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Achievement.DoesNotExist:
+            logger.error('Achievement with ID %s not found', id)
+            return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    """
+    Soft delete a specific Achievement instance by ID.
+    """
+    def delete(self, request, id):
+        """
+        Mark a specific Achievement instance as deleted (soft delete).
+        """
+        logger.info('DELETE request received for Achievement with ID %s', id)
+        try:
+            achievement = Achievement.objects.get(id=id)
+            achievement.is_active = False  # Mark as deleted
+            achievement.save()
+            logger.info('Achievement marked as deleted')
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Achievement.DoesNotExist:
+            logger.error('Achievement with ID %s not found', id)
+            return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
+        

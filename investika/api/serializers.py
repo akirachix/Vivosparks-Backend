@@ -5,6 +5,8 @@ from quizzes.models import Quiz
 from quiz_results.models import QuizResult
 from assessment.models import Assessment
 from django.contrib.auth.models import User
+from virtualmoney.models import VirtualMoney
+from achievements.models import Achievement
 
         
 """      
@@ -74,5 +76,14 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
 
+class VirtualMoneySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VirtualMoney
+        fields = '__all__'
 
+class AchievementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Achievement
+        fields = ['achievement_id', 'criteria', 'date_achieved', 'description', 'reward_type', 'title']
+        
 
