@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-2uw*ux&yp)%sh5+^bh8wdhfk^7^j)-u%^q-qk8@1op)!thn-v1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -147,10 +147,7 @@ AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
 AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
 
-REDIRECT_URI = 'http://localhost:8000/auth/callback/'
-
-REDIRECT_URI = 'http://localhost:8000/auth/'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-
+REDIRECT_URI = os.getenv('REDIRECT_URI')
