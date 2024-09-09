@@ -1,5 +1,19 @@
 from rest_framework import serializers
+from assessment.models import Assessment
 from django.contrib.auth.models import User
+
+class AssessmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Assessment model.
+
+    This serializer converts Assessment model instances into JSON format
+    and validates incoming JSON data before saving it to the database.
+    """
+    
+    class Meta:
+        model = Assessment
+        fields = '__all__'  # Include all fields from the Assessment model in the serialization
+
 
 
 """
@@ -15,3 +29,4 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+

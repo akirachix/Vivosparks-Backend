@@ -24,3 +24,5 @@ vivosparks/
 .env
 __pycache__/
 *.py[cod] 
+**/__pycache__/
+db.sqlite3
