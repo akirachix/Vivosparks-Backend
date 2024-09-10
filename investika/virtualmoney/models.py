@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class VirtualMoney(models.Model):
     """
@@ -9,6 +10,7 @@ class VirtualMoney(models.Model):
     String representation
     """
     id = models.AutoField(primary_key=True)
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,default=None)
     amount = models.DecimalField(max_digits=10, decimal_places=2) 
     date_granted = models.DateTimeField(auto_now_add=True) 
 

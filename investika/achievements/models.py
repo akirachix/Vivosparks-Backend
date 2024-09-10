@@ -1,4 +1,12 @@
 from django.db import models
+from django.conf import settings
+
+
+
+def get_default_user_id(apps, schema_editor):
+    User = apps.get_model('users', 'User')
+    default_user = User.objects.first()  
+    return default_user.id
 
 class Achievement(models.Model):
     
@@ -16,6 +24,7 @@ class Achievement(models.Model):
     ]
 
     achievement_id = models.CharField(max_length=255, unique=True)
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,default=None)
     criteria = models.TextField()
     date_achieved = models.DateField()
     description = models.TextField()

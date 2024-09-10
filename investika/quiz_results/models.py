@@ -1,5 +1,7 @@
 from django.db import models
 from quizzes.models import Quiz 
+from users.models import User
+from django.conf import settings
 
 
 """
@@ -13,7 +15,8 @@ Earnings with precision
 
 class QuizResult(models.Model):
     result_id = models.AutoField(primary_key=True)
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,default=None)
+    quiz_id= models.ForeignKey(Quiz, on_delete=models.CASCADE)
     score = models.IntegerField()
     completed_on = models.DateTimeField(auto_now_add=True)
     money_earned = models.DecimalField(max_digits=10, decimal_places=2)
