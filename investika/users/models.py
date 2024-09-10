@@ -70,9 +70,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     location, income, and avatar. It also uses email as the unique identifier for authentication.
     """
 
+    # user_id = models.AutoField(primary_key=True)  # Auto-incrementing primary key for the user.
+    # username = models.CharField(max_length=100, unique=True)  # Unique username for the user.
+    # email = models.EmailField(unique=True)  # Unique email address for the user.
+    # age = models.IntegerField(null=True, blank=True)  # Optional field to store the user's age.
+    # gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default='male')  # Gender selection for the user.
+    # location = models.CharField(max_length=100, null=True, blank=True)  # Optional field to store the user's location.
+    # income = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Optional field for user's income.
+    # avatar = models.CharField(max_length=50, choices=AVATAR_CHOICES, default='ShadowClaw')  # Avatar selection for the user.
+    # created_at = models.DateTimeField(auto_now_add=True)  # Timestamp when the user was created.
+    # is_active = models.BooleanField(default=True)  # Indicates whether the user account is active.
+    # is_staff = models.BooleanField(default=False)  # Indicates whether the user can log into the admin site.
+
     user_id = models.AutoField(primary_key=True)  # Auto-incrementing primary key for the user.
     username = models.CharField(max_length=100, unique=True)  # Unique username for the user.
     email = models.EmailField(unique=True)  # Unique email address for the user.
+    password = models.CharField(max_length=128)  # Storing hashed password (length 128 is typical for Django).
     age = models.IntegerField(null=True, blank=True)  # Optional field to store the user's age.
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES, default='male')  # Gender selection for the user.
     location = models.CharField(max_length=100, null=True, blank=True)  # Optional field to store the user's location.
@@ -81,6 +94,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)  # Timestamp when the user was created.
     is_active = models.BooleanField(default=True)  # Indicates whether the user account is active.
     is_staff = models.BooleanField(default=False)  # Indicates whether the user can log into the admin site.
+
+    def __str__(self):
+        return self.username
+
 
     objects = UserManager()  # Use the custom UserManager to manage users.
 

@@ -46,7 +46,7 @@ def login_view(request):
         else:
             messages.error(request, "Invalid email or password.")  # Display error message
     
-    return render(request, 'authentication/login.html')  # Render the login page
+    return render(request, 'authentication/index.html')  # Render the login page
 
 
 def sso_login(request):

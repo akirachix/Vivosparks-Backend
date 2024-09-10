@@ -41,8 +41,10 @@ urlpatterns = [
     # URLs for virtual money-related views
     path('virtualmoney/', VirtualMoneyView.as_view(), name='virtualmoney-list'),  # List all virtual money entries
     path('virtualmoney/<int:id>/', VirtualMoneyDetailView.as_view(), name='virtualmoney-detail'),  # View details of a specific virtual money entry by ID
+    
 
     # URLs for achievement-related views
     path('achievements/', AchievementView.as_view(), name='achievement-list'),  # List all achievements
-    path('achievements/<int:id>/', AchievementDetailView.as_view(), name='achievement-detail'),  # View details of a specific achievement by ID
+    path('achievements/<int:id>/', AchievementDetailView.as_view(), name='achievement-detail'),
+
 ]

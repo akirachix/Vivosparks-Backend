@@ -56,10 +56,26 @@ model instances and primitive data types (such as JSON).
 The `Meta` class defines the fields that should be included in the serialized output
  when retrieving or creating a user instance, including sensitive fields like `password`.
 """
+
 class UserSerializer(serializers.ModelSerializer):
+    confirm_password = serializers.CharField(write_only=True)  # Extra field to handle confirm_password
+
     class Meta:
         model = User
-        fields = "__all__"
+        fields = ['username', 'email', 'password', 'confirm_password', 'age', 'gender', 'location', 'income', 'avatar']
+        extra_kwargs = {'password': {'write_only': True}}  # Don't return password in the response
+
+    def validate(self, data):
+        if data['password'] != data['confirm_password']:
+            raise serializers.ValidationError("Passwords do not match.")
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('confirm_password')  # Remove confirm_password from validated_data
+        validated_data['password'] = make_password(validated_data['password'])  # Hash the password
+        return super().create(validated_data)
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -85,4 +101,4 @@ class VirtualMoneySerializer(serializers.ModelSerializer):
 class AchievementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Achievement
-        fields = ['achievement_id', 'criteria', 'date_achieved', 'description', 'reward_type', 'title']
+        fields = '__all__'

@@ -23,13 +23,18 @@ class Achievement(models.Model):
         ('Extra Virtual Money', 'Extra Virtual Money'),
     ]
 
-    achievement_id = models.CharField(max_length=255, unique=True)
+    id = models.CharField(primary_key=True)
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,default=None)
     criteria = models.TextField()
     date_achieved = models.DateField()
     description = models.TextField()
     reward_type = models.CharField(max_length=50)
     title = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True) 
+
+    def soft_delete(self):
+        self.is_active = False
+        self.save() 
 
     def __str__(self):
         return f"Achievement {self.title}"
