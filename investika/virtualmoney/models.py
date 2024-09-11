@@ -11,6 +11,11 @@ class VirtualMoney(models.Model):
     id = models.AutoField(primary_key=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2) 
     date_granted = models.DateTimeField(auto_now_add=True) 
+    is_active= models.BooleanField(default=True)
+    
+    def soft_delete(self):
+        self.is_active = False
+        self.save()
 
     def __str__(self):
         return f"Virtual Money - {self.amount}"
