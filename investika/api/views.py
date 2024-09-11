@@ -8,6 +8,8 @@ from django.contrib.auth.models import User
 from virtualmoney.models import VirtualMoney
 from achievements.models import Achievement
 from users.models import User
+
+
 """
 Serializer for the Market model which include all fields in the serialized output
 """
@@ -287,7 +289,7 @@ class QuizDetailView(APIView):
     def put(self, request, quiz_id):
         logger.info(f"Updating quiz with ID {quiz_id}")
         try:
-            quiz = Quiz.objects.get(id=quiz_id, is_active=True)
+            quiz = Quiz.objects.get(qiuz_id=quiz_id, is_active=True)
             serializer = QuizSerializer(quiz, data=request.data)
             if serializer.is_valid():
                 serializer.save()
@@ -301,7 +303,7 @@ class QuizDetailView(APIView):
     def delete(self, request, quiz_id):
         logger.info(f"Soft deleting quiz with ID {quiz_id}")
         try:
-            quiz = Quiz.objects.get(id=quiz_id, is_active=True)
+            quiz = Quiz.objects.get(quiz_id=quiz_id, is_active=True)
             quiz.soft_delete()
             logger.info(f"Quiz {quiz_id} soft deleted")
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -572,19 +574,22 @@ class VirtualMoneyDetailView(APIView):
             return Response(serializer.data)
         except VirtualMoney.DoesNotExist:
             return Response({"error": "Virtual Money not found"}, status=status.HTTP_404_NOT_FOUND)
-    def patch(self, request, virtual_money_id):
+    def patch(self, request, id):  # Fix: Use 'id' consistently
         try:
-            virtual_money = VirtualMoney.objects.get(virtual_money_id=virtual_money_id)
+            virtual_money = VirtualMoney.objects.get(id=id)
             serializer = VirtualMoneySerializer(virtual_money, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except VirtualMoney.DoesNotExist:
+            return Response({"error": "Virtual Money not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        except VirtualMoney.DoesNotExist:
             return Response({"error": "VirtualMoney not found"}, status=status.HTTP_404_NOT_FOUND)
-    def delete(self, request, virtual_money_id):
+    def delete(self, request,id):
         try:
-            virtual_money = VirtualMoney.objects.get(virtual_money_id=virtual_money_id)
+            virtual_money = VirtualMoney.objects.get(id=id)
             virtual_money.is_active = False
             virtual_money.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -670,3 +675,4 @@ class AchievementDetailView(APIView):
         except Achievement.DoesNotExist:
             logger.error('Achievement with ID %s not found', id)
             return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
+   

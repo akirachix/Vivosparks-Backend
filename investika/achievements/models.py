@@ -21,6 +21,11 @@ class Achievement(models.Model):
     description = models.TextField()
     reward_type = models.CharField(max_length=50)
     title = models.CharField(max_length=200)
+    is_active= models.BooleanField(default=True)
+    
+    def soft_delete(self):
+        self.is_active = False
+        self.save()
 
     def __str__(self):
         return f"Achievement {self.title}"
