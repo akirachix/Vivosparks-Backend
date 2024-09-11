@@ -14,7 +14,6 @@ class VirtualMoney(models.Model):
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,default=None)
     amount = models.DecimalField(max_digits=10, decimal_places=2) 
     date_granted = models.DateTimeField(auto_now_add=True) 
-    is_active = models.BooleanField(default=True)  
 
     def soft_delete(self):
         self.is_active = False

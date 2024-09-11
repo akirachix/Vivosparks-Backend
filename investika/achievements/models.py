@@ -23,7 +23,7 @@ class Achievement(models.Model):
         ('Extra Virtual Money', 'Extra Virtual Money'),
     ]
 
-    id = models.CharField(primary_key=True)
+    id = models.AutoField(primary_key=True, serialize=False)
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,default=None)
     criteria = models.TextField()
     date_achieved = models.DateField()

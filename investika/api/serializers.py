@@ -8,8 +8,11 @@ from django.contrib.auth.models import User
 from virtualmoney.models import VirtualMoney
 from achievements.models import Achievement
 from users.models import User
-"""
-Serializer for the Market model which include all fields in the serialized output
+from django.contrib.auth.hashers import make_password
+
+        
+"""      
+Serializer for the Market model which include all fields in the serialized output  
 """
 class MarketSerializer(serializers.ModelSerializer):
     class Meta:
@@ -56,14 +59,38 @@ model instances and primitive data types (such as JSON).
 The `Meta` class defines the fields that should be included in the serialized output
  when retrieving or creating a user instance, including sensitive fields like `password`.
 """
+ 
 
 class UserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)  # Extra field to handle confirm_password
 
     class Meta:
+        model = User 
+        fields = "__all__"
+
+class RegisterSerializer(serializers.ModelSerializer):
+    class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'confirm_password', 'age', 'gender', 'location', 'income', 'avatar']
-        extra_kwargs = {'password': {'write_only': True}}  # Don't return password in the response
+        fields = '__all__'  # Include all fields from the User model
+        extra_kwargs = {
+            'password': {'write_only': True}  # Ensure the password is write-only
+        }
+
+    def create(self, validated_data):
+        # Extract the password from validated_data
+        password = validated_data.pop('password', None)
+        
+        # Create a new user using the remaining validated data
+        user = User(**validated_data)
+        
+        # Set the password if it exists (use the `set_password` method to hash it)
+        if password:
+            user.set_password(password)
+        
+        # Save the user to the database
+        user.save()
+        
+        return user
 
     def validate(self, data):
         if data['password'] != data['confirm_password']:
@@ -98,6 +125,12 @@ class VirtualMoneySerializer(serializers.ModelSerializer):
     class Meta:
         model = VirtualMoney
         fields = '__all__'
+    
+    def validate_amount(self, value):
+        """Ensure the amount is not negative."""
+        if value < 0:
+            raise serializers.ValidationError("Amount cannot be negative")
+        return value
 class AchievementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Achievement

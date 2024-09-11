@@ -1,149 +1,142 @@
-from django.contrib.auth import authenticate, login as django_login, logout as django_logout
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.urls import reverse
+import json
 from authlib.integrations.django_client import OAuth
 from django.conf import settings
-from django.contrib import messages
-from users.models import User
-
-# Initialize OAuth for Auth0 integration
+from django.shortcuts import redirect, render
+from django.urls import reverse
+from urllib.parse import quote_plus, urlencode
+from django.contrib.auth import authenticate, login as django_login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+import logging
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+"""
+Initialize OAuth for handling OAuth-based authentication, specifically for Auth0.
+"""
 oauth = OAuth()
+"""
+Register the OAuth provider, Auth0, with necessary credentials and configuration.
+"""
 oauth.register(
     "auth0",
-    client_id=settings.AUTH0_CLIENT_ID,  # Auth0 client ID from settings
-    client_secret=settings.AUTH0_CLIENT_SECRET,  # Auth0 client secret from settings
+    client_id=settings.AUTH0_CLIENT_ID,
+    client_secret=settings.AUTH0_CLIENT_SECRET,
     client_kwargs={
-        "scope": "openid profile email",  # Specify the scope of information we want from Auth0
+        "scope": "openid profile email",
     },
-    server_metadata_url=f"https://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",  # Auth0 server metadata URL
+    server_metadata_url=f"https://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",
 )
-
-
-def login_view(request):
+"""
+Set up the logger to capture and log messages for various activities within the views.
+"""
+logger = logging.getLogger(__name__)
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.models import User
+from django.middleware.csrf import get_token
+import json
+from django.contrib.auth import authenticate, login
+@csrf_exempt
+def user_login(request):
     """
-    Handle the login functionality.
-
-    If the request method is POST, it authenticates the user using Django's built-in authentication.
-    If authentication is successful, the user is logged in and redirected to the index page.
-    Otherwise, an error message is displayed.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        HttpResponse: Renders the login template or redirects on successful login.
+    Handle user login with POST request. Authenticates using username and password.
     """
     if request.method == 'POST':
-        email = request.POST['email']
-        password = request.POST['password']
-        user = authenticate(request, username=email, password=password)  # Django's built-in authentication
-        
-        if user is not None:
-            django_login(request, user)  # Log the user in using Django's session system
-            return redirect(reverse("index"))  # Redirect to index or dashboard
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
+        logger.info(f"Login attempt for username: {username}")
+        user = authenticate(username=username, password=password)
+        if user is not None and user.is_active:
+            django_login(request, user)
+            logger.info(f"User {username} logged in successfully.")
+            return JsonResponse({'status': 'success', 'message': 'Logged in successfully!'}, status=200)
         else:
-            messages.error(request, "Invalid email or password.")  # Display error message
-    
-    return render(request, 'authentication/index.html')  # Render the login page
-
-
-def sso_login(request):
+            logger.warning(f"Failed login attempt for username: {username}")
+            return JsonResponse({'status': 'error', 'message': 'Invalid credentials'}, status=401)
+    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=400)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
     """
-    Initiate the Single Sign-On (SSO) login with Auth0.
-
-    This function redirects the user to the Auth0 login page.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        HttpResponse: Redirects to the Auth0 login page.
+    Handles password change requests. Ensures the user is authenticated and verifies the old password.
+    If verification is successful, it sets a new password and updates the session.
+    """
+    logger.info(f"Request method: {request.method} received for password change.")
+    if request.method == 'POST':
+        logger.info(f"POST data received: {request.data}")
+        user = request.user
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        logger.info(f"Password change attempt initiated by user: {user.username}")
+        if user.check_password(old_password):
+            logger.info(f"Old password verified for user: {user.username}")
+            user.set_password(new_password)
+            user.save()
+            update_session_auth_hash(request, user)
+            logger.info(f"Password changed successfully for user: {user.username}")
+            return JsonResponse({'status': 'success', 'message': 'Password changed successfully'}, status=200)
+        else:
+            logger.warning(f"Failed password change attempt for user: {user.username}. Incorrect old password provided.")
+            return JsonResponse({'status': 'error', 'message': 'Old password is incorrect'}, status=400)
+    logger.error(f"Invalid request method: {request.method} received for password change.")
+    return JsonResponse({'status': 'error', 'message': 'Only POST requests are allowed'}, status=400)
+@csrf_exempt
+def loginSSO(request):
+    """
+    Initiates the Single Sign-On (SSO) login process by redirecting the user to the Auth0 authorization endpoint.
     """
     return oauth.auth0.authorize_redirect(
         request, request.build_absolute_uri(reverse("callback"))
     )
-
-
+@csrf_exempt
 def callback(request):
     """
-    Handle the callback from Auth0 after authentication.
-
-    This function processes the token received from Auth0, retrieves user info,
-    and logs the user in if they exist in the local database.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        HttpResponse: Redirects to the index page after successful login.
+    Handles the OAuth callback after successful authentication with Auth0.
+    Retrieves the access token and stores it in the session. Redirects to the index page.
+    Logs any errors encountered during the process.
     """
-    token = oauth.auth0.authorize_access_token(request)  # Get the access token from Auth0
-    userinfo = oauth.auth0.parse_id_token(request, token)  # Parse the user info from the token
-    request.session["user"] = userinfo  # Store user info in session
-    email = userinfo.get("email")  # Extract the user's email from the user info
-
-    # If the user exists in the local database, log them in
-    if check_existing_email(email):
-        user = User.objects.get(email=email)
-        django_login(request, user)  # Log the user in via Django's session system
-
-    return redirect(reverse("index"))  # Redirect to the index page
-
-
-def logout_view(request):
+    try:
+        token = oauth.auth0.authorize_access_token(request)
+        request.session["user"] = token
+        logger.info("OAuth callback successful.")
+        return redirect(request.build_absolute_uri(reverse("index")))
+    except Exception as e:
+        logger.error(f"Error during OAuth callback: {e}")
+        return HttpResponse('Failed to authorize', status=400)
+@csrf_exempt
+def logout(request):
     """
-    Handle the logout functionality.
-
-    This function logs the user out of the Django session and clears the Auth0 session.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        HttpResponse: Redirects to the login page.
+    Logs the user out by clearing the session and redirecting them to the Auth0 logout endpoint.
+    For POST requests, return a JSON response indicating successful logout.
     """
-    django_logout(request)  # Logout from Django session
-    request.session.clear()  # Clear Auth0 session if any
-    return redirect(reverse("login_view"))  # Redirect to login page
+    request.session.clear()
+    if request.method == 'POST':
+        return JsonResponse({'status': 'success', 'message': 'User logged out successfully'}, status=200)
+    else:
+        return redirect(
+            f"https://{settings.AUTH0_DOMAIN}/v2/logout?"
+            + urlencode(
+                {
+                    "returnTo": request.build_absolute_uri(reverse("index")),
+                    "client_id": settings.AUTH0_CLIENT_ID,
+                },
+                quote_via=quote_plus,
+            ),
+        )
 
 
-def check_existing_email(email):
-    """
-    Check if a user with the given email exists in the local database.
-
-    Args:
-        email (str): The user's email address.
-
-    Returns:
-        bool: True if the user exists, False otherwise.
-    """
-    return User.objects.filter(email=email).exists()
-
-
-@login_required
 def index(request):
     """
-    Render the index page for authenticated users.
-
-    If the user is authenticated, it renders the index template with user session data.
-    Otherwise, it returns a simple HTTP response indicating the user is not registered.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        HttpResponse: Renders the index template or returns a simple response.
+    Renders the index page, displaying the session information and user details (if logged in).
     """
-    if request.user.is_authenticated:
-        return render(
-            request,
-            "authentication/index.html",
-            context={
-                "session": request.session.get("user", {}),  # Pass user session data to the template
-                "pretty": json.dumps(request.session.get("user", {}), indent=4),  # Pass prettified JSON of the session data
-            },
-        )
-    else:
-        return HttpResponse("User is not registered.")  # Return a simple response if user is not registered
+    return render(
+        request,
+        "authentication/index.html",
+        context={
+            "session": request.session.get("user"),
+            "pretty": json.dumps(request.session.get("user"), indent=4),
+        },
+    )

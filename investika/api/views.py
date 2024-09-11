@@ -1,3 +1,93 @@
+from rest_framework import serializers
+from market.models import Market
+from investment_simulation.models import InvestmentSimulation
+from quizzes.models import Quiz
+from quiz_results.models import QuizResult
+from assessment.models import Assessment
+from django.contrib.auth.models import User
+from virtualmoney.models import VirtualMoney
+from achievements.models import Achievement
+from users.models import User
+from django.contrib.auth.hashers import check_password
+"""
+Serializer for the Market model which include all fields in the serialized output
+"""
+class MarketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Market
+        fields = '__all__'
+"""
+Serializer for the InvestmentSimulation model which include all fields in the serialized output
+"""
+class InvestmentSimulationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InvestmentSimulation
+        fields = '__all__'
+"""
+Serializer for the Quiz model, handling all fields of the model
+Specify the model the serializer should use
+Use all fields of the Quiz model
+"""
+class QuizSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Quiz
+        fields = "__all__"
+"""
+Serializer for the QuizResult model, handling all fields of the model
+Specify the model the serializer should use
+Use all fields of the QuizResult model
+"""
+class QuizResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuizResult
+        fields = "__all__"
+class AssessmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Assessment model.
+    This serializer converts Assessment model instances into JSON format
+    and validates incoming JSON data before saving it to the database.
+    """
+    class Meta:
+        model = Assessment
+        fields = '__all__'  # Include all fields from the Assessment model in the serialization
+"""
+This serializer is used to convert User model instances into JSON format and vice versa.
+It is based on Django's `ModelSerializer`, which automatically handles the conversion between
+model instances and primitive data types (such as JSON).
+The `Meta` class defines the fields that should be included in the serialized output
+ when retrieving or creating a user instance, including sensitive fields like `password`.
+"""
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "__all__"
+class RegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'  # Include all fields from the User model
+        extra_kwargs = {
+            'password': {'write_only': True}  # Ensure the password is write-only
+        }
+    def create(self, validated_data):
+        # Extract the password from validated_data
+        password = validated_data.pop('password', None)
+        # Create a new user using the remaining validated data
+        user = User(**validated_data)
+        # Set the password if it exists (use the `set_password` method to hash it)
+        if password:
+            user.set_password(password)
+        # Save the user to the database
+        user.save()
+        return user
+class VirtualMoneySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VirtualMoney
+        fields = '__all__'
+class AchievementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Achievement
+        fields = ['achievement_id', 'criteria', 'date_achieved', 'description', 'reward_type', 'title']
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -212,8 +302,8 @@ class QuizDetailView(APIView):
     def delete(self, request, quiz_id):
         logger.info(f"Soft deleting quiz with ID {quiz_id}")
         try:
-            quiz = Quiz.objects.get(quiz_id=quiz_id, is_active=True)
-            quiz.soft_delete()
+            quiz = Quiz.objects.get(id=quiz_id, is_active=True)
+            quiz.soft_delete() 
             logger.info(f"Quiz {quiz_id} soft deleted")
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Quiz.DoesNotExist:
@@ -222,6 +312,7 @@ class QuizDetailView(APIView):
 """
 Handles creating and retrieving quiz results
 """
+
 class QuizResultView(APIView):
     """
     Create a new quiz result
@@ -410,19 +501,48 @@ class UserDetailView(APIView):
         except User.DoesNotExist:
             logger.error(f"User with ID {id} not found.")
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+           
+
     def patch(self, request, id):
-        try:
-            user = User.objects.get(user_id=id)
-            serializer = UserSerializer(user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                logger.info(f"User {user.username} partially updated successfully.")
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            logger.warning(f"Failed to partially update user {user.username}: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
-            logger.error(f"User with ID {id} not found.")
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+      try:
+        # Get the user object
+        user = User.objects.get(user_id=id)
+        data = request.data.copy()
+
+        # Check if the old and new passwords are provided in the request
+        old_password = data.get('old_password', None)
+        new_password = data.get('new_password', None)
+
+        # If both passwords are provided, verify the old password and update to the new one
+        if old_password and new_password:
+            # Check if the old password matches the current one
+            if not check_password(old_password, user.password):
+                logger.warning(f"Failed to update password for user {user.username}: old password mismatch.")
+                return Response({"error": "Old password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Set the new password and hash it
+            user.set_password(new_password)
+            user.save()
+            logger.info(f"Password for user {user.username} updated successfully.")
+            
+            # Remove the password fields from the data to avoid saving them in plaintext
+            data.pop('old_password')
+            data.pop('new_password')
+
+        # Perform the partial update for the remaining fields
+        serializer = UserSerializer(user, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(f"User {user.username} partially updated successfully.")
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        logger.warning(f"Failed to partially update user {user.username}: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+      except User.DoesNotExist:
+        logger.error(f"User with ID {id} not found.")
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
     def delete(self, request, id):
         try:
             user = User.objects.get(user_id=id)
@@ -482,7 +602,9 @@ class VirtualMoneyDetailView(APIView):
             return Response(serializer.data)
         except VirtualMoney.DoesNotExist:
             return Response({"error": "Virtual Money not found"}, status=status.HTTP_404_NOT_FOUND)
-    def patch(self, request, id):
+    
+
+    def patch(self, request, virtual_money_id):
         try:
             virtual_money = VirtualMoney.objects.get(id=id)
             serializer = VirtualMoneySerializer(virtual_money, data=request.data, partial=True)
@@ -492,7 +614,8 @@ class VirtualMoneyDetailView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except VirtualMoney.DoesNotExist:
             return Response({"error": "VirtualMoney not found"}, status=status.HTTP_404_NOT_FOUND)
-    def delete(self, request, id):
+
+    def delete(self, request, virtual_money_id):
         try:
             virtual_money = VirtualMoney.objects.get(id=id)
             virtual_money.is_active = False
@@ -528,65 +651,11 @@ class AchievementView(APIView):
         serializer = AchievementSerializer(achievements, many=True)
         return Response(serializer.data)
 
-# class AchievementDetailView(APIView):
-#     """
-#     Handles retrieval, partial update, and soft deletion of a specific Achievement instance by ID.
-#     """
-#     def get(self, request, id):
-#         """
-#         Retrieve a specific Achievement instance by ID.
-#         """
-#         logger.info('GET request received for Achievement with ID %s', id)
-#         try:
-#             achievement = Achievement.objects.get(id=id)
-#             serializer = AchievementSerializer(achievement)
-#             return Response(serializer.data)
-#         except Achievement.DoesNotExist:
-#             logger.error('Achievement with ID %s not found', id)
-#             return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
-#     """
-#     Update a specific Achievement instance by ID.
-#     """
-#     def patch(self, request, id):
-#         """
-#         Partially update a specific Achievement instance by ID.
-#         """
-#         logger.info('PATCH request received for Achievement with ID %s', id)
-#         try:
-#             achievement = Achievement.objects.get(id=id)
-#             serializer = AchievementSerializer(achievement, data=request.data, partial=True)
-#             if serializer.is_valid():
-#                 serializer.save()
-#                 logger.info('Achievement updated successfully')
-#                 return Response(serializer.data)
-#             logger.error('Validation errors: %s', serializer.errors)
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         except Achievement.DoesNotExist:
-#             logger.error('Achievement with ID %s not found', id)
-#             return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
-#     """
-#     Soft delete a specific Achievement instance by ID.
-#     """
-#     def delete(self, request, id):
-#         """
-#         Mark a specific Achievement instance as deleted (soft delete).
-#         """
-#         logger.info('DELETE request received for Achievement with ID %s', id)
-#         try:
-#             achievement = Achievement.objects.get(id=id)
-#             achievement.is_active = False  # Mark as deleted
-#             achievement.save()
-#             logger.info('Achievement marked as deleted')
-#             return Response(status=status.HTTP_204_NO_CONTENT)
-#         except Achievement.DoesNotExist:
-#             logger.error('Achievement with ID %s not found', id)
-#             return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
-
 class AchievementDetailView(APIView):
     """
     Handles retrieval, partial update, and soft deletion of a specific Achievement instance by ID.
     """
-    
+
     def get(self, request, id):
         """
         Retrieve a specific Achievement instance by ID.
@@ -597,7 +666,10 @@ class AchievementDetailView(APIView):
             return Response(serializer.data)
         except Achievement.DoesNotExist:
             return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
-    
+
+    """
+    Update a specific Achievement instance by ID.
+    """
     def patch(self, request, id):
         """
         Partially update a specific Achievement instance by ID.
@@ -612,6 +684,9 @@ class AchievementDetailView(APIView):
         except Achievement.DoesNotExist:
             return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    """
+    Soft delete a specific Achievement instance by ID.
+    """
     def delete(self, request, id):
         """
         Mark a specific Achievement instance as deleted (soft delete).
@@ -622,4 +697,6 @@ class AchievementDetailView(APIView):
             achievement.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Achievement.DoesNotExist:
+            logger.error('Achievement with ID %s not found', id)
             return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
+        
