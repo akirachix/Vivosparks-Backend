@@ -98,7 +98,7 @@ MIDDLEWARE = [
 ]
 
 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
+CSRF_TRUSTED_ORIGINS = []
 
 
 ROOT_URLCONF = 'investika.urls'
@@ -135,14 +135,16 @@ import os
 
 config = Config(os.environ.get('ENV_PATH', '.env'))
 
+load_dotenv()
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DATABASE_NAME', default='default_db_name'),
-        'USER': config('DATABASE_USER', default='default_user'),
-        'PASSWORD': config('DATABASE_PASSWORD', default='default_password'),
-        'HOST': config('DATABASE_HOST', default='127.0.0.1'),
-        'PORT': config('DATABASE_PORT', default='5432'),
+        'NAME': os.getenv('DATABASE_NAME'),
+        'USER': os.getenv('DATABASE_USER'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST'),
+        'PORT': os.getenv('DATABASE_PORT'),
     }
 }
 
