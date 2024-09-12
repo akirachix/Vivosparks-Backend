@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views
+from .views import user_login, loginSSO, callback, logout, index
+
 
 """
 This module defines the URL patterns for the authentication-related views.
@@ -9,11 +10,12 @@ This module defines the URL patterns for the authentication-related views.
 - The `logout_view` logs the user out of the Django session and redirects them to the Auth0 logout endpoint.
 - The `callback` view processes the authentication response from Auth0 and handles user session management.
 """
-
 urlpatterns = [
-    path("", views.index, name="index"),
-    path("login", views.login_view, name="login_view"), 
-    path("sso-login", views.sso_login, name="sso_login"),  
-    path("logout", views.logout_view, name="logout_view"), 
-    path("callback", views.callback, name="callback"),  
+   path('login/', user_login, name='user_login'),
+   path('logout/', logout, name='logout'),
+   path('callback/', callback, name='callback'),
+   path('sso-login/', loginSSO, name='login_sso'),
+   path('', index, name='index'),
 ]
+
+

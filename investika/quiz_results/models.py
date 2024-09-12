@@ -2,6 +2,7 @@ from django.db import models
 from quizzes.models import Quiz 
 from users.models import User
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 
 """
@@ -12,17 +13,13 @@ Score achieved in the quiz
 Auto-populated completion date and time
 Earnings with precision
 """
-
+User = get_user_model()
 class QuizResult(models.Model):
-    result_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True,default=None)
-    quiz_id= models.ForeignKey(Quiz, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,default=None)
     score = models.IntegerField()
-    completed_on = models.DateTimeField(auto_now_add=True)
-    money_earned = models.DecimalField(max_digits=10, decimal_places=2)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
-
-
+    money_earned = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Example field
 
     def soft_delete(self):
         """Mark this quiz result as inactive (soft delete)."""

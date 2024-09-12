@@ -11,7 +11,7 @@ Points or score for the quiz
 
 
 class Quiz(models.Model):
-    quiz_id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     quiz_text = models.TextField()
     is_active = models.BooleanField(default=True)
 
@@ -22,4 +22,5 @@ class Quiz(models.Model):
 
     def __str__(self):
         return f"Quiz {self.quiz_id}"
+
 
