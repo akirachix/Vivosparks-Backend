@@ -27,15 +27,11 @@ jobs:
       - name: Run tests
         run: |
           python manage.py test
-
-      - name: Install Black
-        run: |
-          pip install black
           
-      - name: Check code formatting with Black
+      - name: formatting with Black
         id: action_black
         run: |
-          black --check .
+          black .
         
       - name: Run migrations
         run: |
@@ -44,14 +40,3 @@ jobs:
       - name: Run tests
         run: |
           python manage.py test
-          
-      - name: Create Pull Request if Black Reformats
-        if: steps.action_black.outcome == 'failure'
-        uses: peter-evans/create-pull-request@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Format Python code with psf/black"
-          commit-message: ":art: Format Python code with psf/black"
-          body: "This pull request formats the code using Black."
-          base: ${{ github.head_ref }}
-          branch: actions/black
