@@ -27,12 +27,8 @@ jobs:
       - name: Run tests
         run: |
           python manage.py test
-
-      - name: Install Black
-        run: |
-          pip install black
           
-      - name: Check code formatting with Black
+      - name: formatting with Black
         id: action_black
         run: |
           black .
@@ -44,4 +40,3 @@ jobs:
       - name: Run tests
         run: |
           python manage.py test
-  
