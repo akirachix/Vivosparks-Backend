@@ -27,7 +27,7 @@ jobs:
           python investika/manage.py migrate
       - name: Run tests
         run: |
-          python manage.py test
+          python investika/manage.py test
           
       - name: formatting with Black
         id: action_black
