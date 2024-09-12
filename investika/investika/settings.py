@@ -23,10 +23,9 @@ from datetime import timedelta
 
 
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-TEMPLATES_DIR= os.path.join(BASE_DIR,'My App','templates')
+TEMPLATES_DIR= os.path.join(BASE_DIR,'Investika','templates')
 
 
 # Quick-start development settings - unsuitable for production
@@ -130,18 +129,22 @@ WSGI_APPLICATION = 'investika.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+from decouple import Config, Csv
+import os
+
+
+config = Config(os.environ.get('ENV_PATH', '.env'))
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "vivosparks",
-        "USER": "investika",
-        "PASSWORD": "vivo",
-        "HOST": "127.0.0.1",
-        "PORT": "5432",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DATABASE_NAME', default='default_db_name'),
+        'USER': config('DATABASE_USER', default='default_user'),
+        'PASSWORD': config('DATABASE_PASSWORD', default='default_password'),
+        'HOST': config('DATABASE_HOST', default='127.0.0.1'),
+        'PORT': config('DATABASE_PORT', default='5432'),
     }
 }
-
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -208,11 +211,12 @@ ENV_FILE =find_dotenv()
 if ENV_FILE:
    load_dotenv(ENV_FILE)
   
+
+
+
 AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
 AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
 AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
-
-
 
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
@@ -235,6 +239,7 @@ SIMPLE_JWT = {
    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
+
 
 
 

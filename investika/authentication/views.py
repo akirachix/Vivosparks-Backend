@@ -19,7 +19,7 @@ oauth.register(
     client_id=settings.AUTH0_CLIENT_ID,
     client_secret=settings.AUTH0_CLIENT_SECRET,
     client_kwargs={"scope": "openid profile email"},
-    server_metadata_url=f"https://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",
+    server_metadata_url=f"http://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",
 )
 
 # Set up logger
@@ -44,7 +44,9 @@ def user_login(request):
 
 @csrf_exempt
 def loginSSO(request):
-    return oauth.auth0.authorize_redirect(request, request.build_absolute_uri(reverse("callback")))
+    return oauth.auth0.authorize_redirect(
+        request, request.build_absolute_uri(reverse("callback"))
+    )
 
 @csrf_exempt
 def callback(request):
@@ -59,7 +61,12 @@ def callback(request):
         return redirect(request.build_absolute_uri(reverse("index")))
     except Exception as e:
         logger.error(f"Error during OAuth callback: {e}")
-        return HttpResponse('Failed to authorize', status=400)
+        return JsonResponse({'status': 'error', 'message': 'Failed to authorize'}, status=400)
+
+
+
+
+
 
 
 @csrf_exempt
@@ -69,7 +76,7 @@ def logout(request):
         return JsonResponse({'status': 'success', 'message': 'User logged out successfully'}, status=200)
     else:
         return redirect(
-            f"https://{settings.AUTH0_DOMAIN}/v2/logout?"
+            f"http://{settings.AUTH0_DOMAIN}/v2/logout?"
             + urlencode(
                 {
                     "returnTo": request.build_absolute_uri(reverse("index")),
@@ -89,3 +96,7 @@ def index(request):
             "pretty": json.dumps(request.session.get("user"), indent=4),
         },
     )
+
+def test_callback_csrf_warning(self):
+    response = self.client.get(self.callback_url)
+    self.assertIn(b'CSRF Warning! State not equal in request and response.', response.content)
