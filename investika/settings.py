@@ -250,15 +250,17 @@ if ENV_FILE:
 
 
 
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
-AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
-AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN","")
+AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID","")
+AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET","")
+
+REDIRECT_URI = "https://investika-fed709cc5cec.herokuapp.com/auth/callback/"
 
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
-REDIRECT_URI = os.getenv('REDIRECT_URI')
+REDIRECT_URI = os.getenv('REDIRECT_URI',"")
 
 
 from datetime import timedelta
