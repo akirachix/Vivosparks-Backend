@@ -25,15 +25,9 @@ jobs:
           git remote -v
           git remote add heroku https://git.heroku.com/investika.git || echo "Heroku remote already exists"
 
-      - name: Set Heroku buildpack
-        run: |
-          heroku buildpacks:set heroku/python -a investika
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v3.13.15
         with:
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: "sawatok"
+          heroku_app_name: "investika"
           heroku_email: ${{ secrets.HEROKU_EMAIL }}
