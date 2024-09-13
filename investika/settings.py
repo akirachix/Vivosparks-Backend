@@ -19,9 +19,6 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from datetime import timedelta
 
-import django_heroku
-
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -256,5 +253,4 @@ SIMPLE_JWT = {
 
 
 
-django_heroku.settings(locals())
 
