@@ -19,7 +19,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from datetime import timedelta
 
-
+import django_heroku
 
 
 
@@ -95,6 +95,7 @@ MIDDLEWARE = [
    'django.contrib.auth.middleware.AuthenticationMiddleware',
    'django.contrib.messages.middleware.MessageMiddleware',
    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 
@@ -207,6 +208,8 @@ USE_TZ = True
 
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 
 # Default primary key field type
@@ -252,7 +255,6 @@ SIMPLE_JWT = {
 }
 
 
-# Heroku settings.
-import django_heroku
+
 django_heroku.settings(locals())
 

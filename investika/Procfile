@@ -1,3 +1,4 @@
-web: gunicorn --pythonpath investika investika.wsgi:application
-release: cd investika && ./manage.py migrate --no-input
-gunicorn learning_log.wsgi --log-file -
+
+
+
+web: gunicorn investika.wsgi --log-file -
