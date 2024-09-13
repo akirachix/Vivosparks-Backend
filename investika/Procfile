@@ -1,2 +1,3 @@
 web: gunicorn --pythonpath mysite mysite.wsgi:application
 release: cd mysite && ./manage.py migrate --no-input
+gunicorn learning_log.wsgi --log-file -
