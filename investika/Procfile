@@ -1,2 +1,4 @@
-web: gunicorn --pythonpath mysite mysite.wsgi:application
-release: cd mysite && ./manage.py migrate --no-input
+
+
+
+web: gunicorn investika.wsgi --log-file -
