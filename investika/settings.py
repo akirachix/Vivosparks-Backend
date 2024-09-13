@@ -37,7 +37,7 @@ SECRET_KEY = 'django-insecure-2uw*ux&yp)%sh5+^bh8wdhfk^7^j)-u%^q-qk8@1op)!thn-v1
 DEBUG = True
 
 
-ALLOWED_HOSTS = ["localhost", "django-github-6cbf23e36b5b.herokuapp.com"]
+ALLOWED_HOSTS = ["*"]
 
 
 SESSION_COOKIE_SECURE = True
