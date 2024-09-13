@@ -24,10 +24,10 @@ jobs:
           pip install -r requirements.txt
       - name: Run migrations
         run: |
-          python investika/manage.py migrate
+          python manage.py migrate
       - name: Run tests
         run: |
-          python investika/manage.py test
+          python manage.py test
           
       - name: formatting with Black
         id: action_black
