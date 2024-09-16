@@ -18,9 +18,8 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv, find_dotenv
 from datetime import timedelta
-
-import django_heroku
-
+import dj_database_url
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -40,7 +39,7 @@ SECRET_KEY = 'django-insecure-2uw*ux&yp)%sh5+^bh8wdhfk^7^j)-u%^q-qk8@1op)!thn-v1
 DEBUG = True
 
 
-ALLOWED_HOSTS = ["localhost", "django-github-6cbf23e36b5b.herokuapp.com"]
+ALLOWED_HOSTS = ["*"]
 
 
 SESSION_COOKIE_SECURE = True
@@ -149,12 +148,35 @@ load_dotenv()
 #     }
 # }
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
+
+# DATABASE_URL = os.getenv("DATABASE_URL")
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.getenv('DATABASE_URL')
+#     )
+# }
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL')
+    )
 }
+
+# Fallback for local development and test environments
+if not os.getenv('DATABASE_URL'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 
@@ -228,15 +250,17 @@ if ENV_FILE:
 
 
 
-AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN")
-AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID")
-AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET")
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN","")
+AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID","")
+AUTH0_CLIENT_SECRET = os.environ.get("AUTH0_CLIENT_SECRET","")
+
+REDIRECT_URI = os.environ.get("REDIRECT_URI", "")
 
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
-REDIRECT_URI = os.getenv('REDIRECT_URI')
+REDIRECT_URI = os.getenv('REDIRECT_URI',"")
 
 
 from datetime import timedelta
@@ -256,5 +280,4 @@ SIMPLE_JWT = {
 
 
 
-django_heroku.settings(locals())
 
