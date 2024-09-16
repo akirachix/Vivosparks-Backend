@@ -74,7 +74,8 @@ INSTALLED_APPS = [
     'achievements',
     'virtualmoney',
     'rest_framework_simplejwt.token_blacklist',
-    'drf_yasg'
+    'drf_yasg',
+
 ]
 
 AUTHENTICATION_BACKENDS = [
