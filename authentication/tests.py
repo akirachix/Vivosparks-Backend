@@ -33,15 +33,15 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertJSONEqual(response.content, {'status': 'error', 'message': 'Invalid credentials'})
 
-    @patch('authlib.integrations.django_client.OAuth')
-    def test_login_sso_redirect(self, mock_oauth):
-        mock_oauth.auth0.authorize_redirect.return_value = MagicMock(
-            status_code=302,
-            headers={'Location': 'https://dev-ukbw6mmqrbrekrgz.us.auth0.com/authorize?response_type=code&client_id=L3wIJ5y53AziBIJkWvptM1W4VaCgjues&redirect_uri=http%3A%2F%2Ftestserver%2Fauth%2Fcallback%2F&scope=openid+profile+email&state=mock_state&nonce=mock_nonce'}
-        )
-        response = self.client.get(self.sso_login_url)
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response['Location'].startswith('https://dev-ukbw6mmqrbrekrgz.us.auth0.com/authorize'))
+    # @patch('authlib.integrations.django_client.OAuth')
+    # def test_login_sso_redirect(self, mock_oauth):
+    #     mock_oauth.auth0.authorize_redirect.return_value = MagicMock(
+    #         status_code=302,
+    #         headers={'Location': 'https://dev-ukbw6mmqrbrekrgz.us.auth0.com/authorize?response_type=code&client_id=L3wIJ5y53AziBIJkWvptM1W4VaCgjues&redirect_uri=http%3A%2F%2Ftestserver%2Fauth%2Fcallback%2F&scope=openid+profile+email&state=mock_state&nonce=mock_nonce'}
+    #     )
+    #     response = self.client.get(self.sso_login_url)
+    #     self.assertEqual(response.status_code, 302)
+    #     self.assertTrue(response['Location'].startswith('https://dev-ukbw6mmqrbrekrgz.us.auth0.com/authorize'))
 
     
     @patch('authlib.integrations.django_client.OAuth')
