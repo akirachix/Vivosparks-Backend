@@ -11,7 +11,6 @@ class Assessment(models.Model):
     question_text: The text of the question associated with the assessment.
     question_image: URL of an optional image related to the question.
     answers: A JSON field storing possible answers to the question.
-    correct_answer: The correct answer for the question (if applicable).
     is_active: Indicator for whether the assessment is active (supports soft deletion).
     taken_at: Timestamp for when the assessment was taken.
     """
@@ -20,8 +19,7 @@ class Assessment(models.Model):
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, default=None)
     question_text = models.CharField(max_length=255, default=None)
     question_image = models.URLField(max_length=255, null=True, blank=True)
-    answers = models.JSONField(default=list)  
-    correct_answer = models.CharField(max_length=255, blank=True)  
+    answers = models.JSONField(default=list)    
     is_active = models.BooleanField(default=True)
     taken_at = models.DateTimeField(auto_now_add=True)  
 
