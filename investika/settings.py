@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_filters',
 
+
 ]
 
 AUTHENTICATION_BACKENDS = [
