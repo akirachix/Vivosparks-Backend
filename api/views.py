@@ -12,18 +12,57 @@ from virtualmoney.models import VirtualMoney
 from .serializers import VirtualMoneySerializer
 from achievements.models import Achievement
 from .serializers import (
-   MarketSerializer,
-   InvestmentSimulationSerializer,
-   AssessmentSerializer,
-   QuizSerializer,
-   QuizResultSerializer,
-   UserSerializer,
-   AchievementSerializer,
-   RegisterSerializer,
+    MarketSerializer,
+    InvestmentSimulationSerializer,
+    AssessmentSerializer,
+    QuizSerializer,
+    QuizResultSerializer,
+    UserSerializer,
+    AchievementSerializer,
+    RegisterSerializer,
 )
 import logging
+from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework as filters
+
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+"""
+Filter classes for dashboard metrics
+"""
+class UserFilter(filters.FilterSet):
+    username = filters.CharFilter(field_name='username', lookup_expr='icontains')
+    is_active = filters.BooleanFilter(field_name='is_active')
+
+    class Meta:
+        model = User
+        fields = ['username', 'is_active']
+
+class MarketFilter(filters.FilterSet):
+    name = filters.CharFilter(field_name='name', lookup_expr='icontains')
+
+    class Meta:
+        model = Market
+        fields = ['name', 'is_active']
+
+class InvestmentSimulationFilter(filters.FilterSet):
+    risk_level = filters.RangeFilter(field_name='risk_level')
+    investment_type = filters.CharFilter(field_name='investment_type', lookup_expr='icontains')
+    user = filters.CharFilter(field_name='user__username', lookup_expr='icontains')
+
+    class Meta:
+        model = InvestmentSimulation
+        fields = ['risk_level', 'investment_type', 'user', 'is_active']
+
+class QuizResultFilter(filters.FilterSet):
+    score = filters.RangeFilter(field_name='score')
+    user = filters.CharFilter(field_name='user__username', lookup_expr='icontains')
+
+    class Meta:
+        model = QuizResult
+        fields = ['score', 'user', 'is_active']
+
 """
 MarketListView:
    - Handles list operations for the `Market` model, including:
@@ -31,11 +70,16 @@ MarketListView:
      - POST: Creates a new market entry.
 """
 class MarketListView(APIView):
+   filter_backends = [DjangoFilterBackend]
+   filterset_class = MarketFilter  # Adding filter
+
    def get(self, request):
        logger.info("Fetching all active markets")
        markets = Market.objects.filter(is_active=True)
-       serializer = MarketSerializer(markets, many=True)
+       filtered_markets = self.filterset_class(request.GET, queryset=markets)  # Applying filter
+       serializer = MarketSerializer(filtered_markets.qs, many=True)
        return Response(serializer.data)
+
    def post(self, request):
        logger.info("Creating a new market entry")
        serializer = MarketSerializer(data=request.data)
@@ -45,6 +89,7 @@ class MarketListView(APIView):
            return Response(serializer.data, status=status.HTTP_201_CREATED)
        logger.error(f"Market creation failed: {serializer.errors}")
        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 """
 MarketDetailView:
    - Handles detailed operations on a single market entry, including:
@@ -62,6 +107,7 @@ class MarketDetailView(APIView):
        except Market.DoesNotExist:
            logger.error(f"Market with ID {market_id} not found or inactive")
            return Response(status=status.HTTP_404_NOT_FOUND)
+
    def put(self, request, market_id):
        try:
            logger.info(f"Updating market with ID: {market_id}")
@@ -76,6 +122,7 @@ class MarketDetailView(APIView):
        except Market.DoesNotExist:
            logger.error(f"Market with ID {market_id} not found or inactive")
            return Response(status=status.HTTP_404_NOT_FOUND)
+
    def delete(self, request, market_id):
        try:
            logger.info(f"Attempting to deactivate (soft delete) market with ID: {market_id}")
@@ -87,6 +134,7 @@ class MarketDetailView(APIView):
        except Market.DoesNotExist:
            logger.error(f"Market with ID {market_id} not found or already deactivated")
            return Response(status=status.HTTP_404_NOT_FOUND)
+
 """
 InvestmentSimulationListView:
    - Handles list operations for the `InvestmentSimulation` model, including:
@@ -94,10 +142,14 @@ InvestmentSimulationListView:
      - POST: Creates a new investment simulation entry.
 """
 class InvestmentSimulationListView(APIView):
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = InvestmentSimulationFilter  # Adding filter
+
     def get(self, request):
         logger.info("Fetching all investment simulations")
         simulations = InvestmentSimulation.objects.filter(is_active=True)
-        serializer = InvestmentSimulationSerializer(simulations, many=True)
+        filtered_simulations = self.filterset_class(request.GET, queryset=simulations)  # Applying filter
+        serializer = InvestmentSimulationSerializer(filtered_simulations.qs, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -147,6 +199,7 @@ class InvestmentSimulationDetailView(APIView):
         except InvestmentSimulation.DoesNotExist:
             logger.error(f"Investment simulation with ID {id} not found")
             return Response(status=status.HTTP_404_NOT_FOUND)
+
 """
 Handles creating and retrieving quizzes
 """
@@ -170,7 +223,7 @@ class QuizView(APIView):
         serializer = QuizSerializer(quizzes, many=True)
         logger.info(f"{len(quizzes)} active quizzes retrieved")
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
 class QuizDetailView(APIView):
     """
     Retrieve, update, or soft delete a specific quiz by ID.
@@ -217,9 +270,9 @@ class QuizDetailView(APIView):
 
 
 class QuizResultView(APIView):
-   """
-   Create a new quiz result
-   """
+   filter_backends = [DjangoFilterBackend]
+   filterset_class = QuizResultFilter  # Adding filter
+
    def post(self, request):
        logger.info("Creating a new quiz result")
        serializer = QuizResultSerializer(data=request.data)
@@ -229,15 +282,15 @@ class QuizResultView(APIView):
            return Response(serializer.data, status=status.HTTP_201_CREATED)
        logger.error("Invalid quiz result data")
        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-   """
-   Retrieve all quiz results (excluding soft-deleted ones)
-   """
+
    def get(self, request):
        logger.info("Retrieving all active quiz results")
        quiz_results = QuizResult.objects.filter(is_active=True)
-       serializer = QuizResultSerializer(quiz_results, many=True)
+       filtered_quiz_results = self.filterset_class(request.GET, queryset=quiz_results)  # Applying filter
+       serializer = QuizResultSerializer(filtered_quiz_results.qs, many=True)
        logger.info(f"{len(quiz_results)} active quiz results retrieved")
-       return Response(serializer.data, status=status.HTTP_200_OK)
+       return Response(serializer.data)
+
 class QuizResultDetailView(APIView):
    """
    Retrieve a specific quiz result by ID
@@ -282,97 +335,22 @@ class QuizResultDetailView(APIView):
        except QuizResult.DoesNotExist:
            logger.error(f"Quiz result {id} not found")
            return Response({"error": "Quiz result not found"}, status=status.HTTP_404_NOT_FOUND)
-class AssessmentDetailView(APIView):
-   """
-   Retrieve, update, or soft delete a specific Assessment instance based on its ID.
-   """
-   def get(self, request, assessment_id):
-       """
-       Retrieve a specific Assessment by its ID.
-       Returns:
-           Response: The HTTP response containing the Assessment data or 404 status if not found.
-       """
-       try:
-           assessment = Assessment.objects.get(assessment_id=assessment_id)
-           serializer = AssessmentSerializer(assessment)
-           logger.info(f"Retrieved Assessment with ID {assessment_id}")
-           return Response(serializer.data)
-       except Assessment.DoesNotExist:
-           logger.error(f"Assessment with ID {assessment_id} not found")
-           return Response({'detail': 'Assessment not found.'}, status=status.HTTP_404_NOT_FOUND)
-   def put(self, request, assessment_id):
-       """
-       Update a specific Assessment by its ID.
-       Returns:
-           Response: The HTTP response with the updated Assessment data or 400 status if validation fails.
-       """
-       try:
-           assessment = Assessment.objects.get(assessment_id=assessment_id)
-           serializer = AssessmentSerializer(assessment, data=request.data, partial=True)
-           if serializer.is_valid():
-               serializer.save()
-               logger.info(f"Updated Assessment with ID {assessment_id}")
-               return Response(serializer.data)
-           else:
-               logger.error(f"Failed to update Assessment with ID {assessment_id}: %s", serializer.errors)
-               return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-       except Assessment.DoesNotExist:
-           logger.error(f"Assessment with ID {assessment_id} not found for update")
-           return Response({'detail': 'Assessment not found.'}, status=status.HTTP_404_NOT_FOUND)
-   def delete(self, request, assessment_id):
-       """
-       Soft delete a specific Assessment by its ID by marking it as inactive.
-       Returns:
-           Response: The HTTP response with a 204 status if the soft deletion was successful or 404 status if not found.
-       """
-       try:
-           assessment = Assessment.objects.get(assessment_id=assessment_id)
-           assessment.is_active = False  # Soft delete by marking as inactive
-           assessment.save()
-           logger.info(f"Soft deleted Assessment with ID {assessment_id}")
-           return Response({'detail': 'Assessment soft deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-       except Assessment.DoesNotExist:
-           logger.error(f"Assessment with ID {assessment_id} not found for soft deletion")
-           return Response({'detail': 'Assessment not found.'}, status=status.HTTP_404_NOT_FOUND)
-      
-class AssessmentListView(APIView):
-   """
-   List all Assessments or create a new Assessment.
-   """
-   def get(self, request):
-       """
-       List all Assessments.
-       Returns:
-           Response: The HTTP response containing a list of all Assessments.
-       """
-       assessments = Assessment.objects.filter(is_active=True)
-       serializer = AssessmentSerializer(assessments, many=True)
-       logger.info("Listed all active Assessments")
-       return Response(serializer.data)
-   def post(self, request):
-       """
-       Create a new Assessment.
-       Returns:
-           Response: The HTTP response with the created Assessment data or 400 status if validation fails.
-       """
-       serializer = AssessmentSerializer(data=request.data)
-       if serializer.is_valid():
-           serializer.save()
-           logger.info("Created a new Assessment")
-           return Response(serializer.data, status=status.HTTP_201_CREATED)
-       else:
-           logger.error("Failed to create a new Assessment: %s", serializer.errors)
-           return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+"""
+UserListView:
+   - Handles listing all users with filter capabilities for username and active status.
+"""
 class UserListView(APIView):
-   """
-   This view returns a list of all users in the system.
-   It uses the `UserSerializer` to serialize the user data and logs the retrieval.
-   """
+   filter_backends = [DjangoFilterBackend]
+   filterset_class = UserFilter  # Adding filter
+
    def get(self, request):
        users = User.objects.all()
-       serializer = UserSerializer(users, many=True)
+       filtered_users = self.filterset_class(request.GET, queryset=users)  # Applying filter
+       serializer = UserSerializer(filtered_users.qs, many=True)
        logger.info("Retrieved user list.")
        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class UserDetailView(APIView):
    """
    This view handles retrieving, updating, and deleting a specific user by their ID.
@@ -453,6 +431,85 @@ class RegisterView(APIView):
            return Response(serializer.data, status=status.HTTP_201_CREATED)
        logger.error(f"Registration failed: {serializer.errors}")
        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+"""
+AssessmentListView:
+   - Handles listing and creation of assessments with the ability to filter.
+"""
+class AssessmentListView(APIView):
+   filter_backends = [DjangoFilterBackend]
+   filterset_class = filters.FilterSet  # No custom filter added for simplicity
+
+   def get(self, request):
+       assessments = Assessment.objects.filter(is_active=True)
+       filtered_assessments = self.filterset_class(request.GET, queryset=assessments)  # Applying filter
+       serializer = AssessmentSerializer(filtered_assessments.qs, many=True)
+       logger.info("Listed all active Assessments")
+       return Response(serializer.data)
+
+   def post(self, request):
+       serializer = AssessmentSerializer(data=request.data)
+       if serializer.is_valid():
+           serializer.save()
+           logger.info("Created a new Assessment")
+           return Response(serializer.data, status=status.HTTP_201_CREATED)
+       else:
+           logger.error("Failed to create a new Assessment: %s", serializer.errors)
+           return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AssessmentDetailView(APIView):
+   """
+   Retrieve, update, or soft delete a specific Assessment instance based on its ID.
+   """
+   def get(self, request, assessment_id):
+       """
+       Retrieve a specific Assessment by its ID.
+       Returns:
+           Response: The HTTP response containing the Assessment data or 404 status if not found.
+       """
+       try:
+           assessment = Assessment.objects.get(assessment_id=assessment_id)
+           serializer = AssessmentSerializer(assessment)
+           logger.info(f"Retrieved Assessment with ID {assessment_id}")
+           return Response(serializer.data)
+       except Assessment.DoesNotExist:
+           logger.error(f"Assessment with ID {assessment_id} not found")
+           return Response({'detail': 'Assessment not found.'}, status=status.HTTP_404_NOT_FOUND)
+   def put(self, request, assessment_id):
+       """
+       Update a specific Assessment by its ID.
+       Returns:
+           Response: The HTTP response with the updated Assessment data or 400 status if validation fails.
+       """
+       try:
+           assessment = Assessment.objects.get(assessment_id=assessment_id)
+           serializer = AssessmentSerializer(assessment, data=request.data, partial=True)
+           if serializer.is_valid():
+               serializer.save()
+               logger.info(f"Updated Assessment with ID {assessment_id}")
+               return Response(serializer.data)
+           else:
+               logger.error(f"Failed to update Assessment with ID {assessment_id}: %s", serializer.errors)
+               return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+       except Assessment.DoesNotExist:
+           logger.error(f"Assessment with ID {assessment_id} not found for update")
+           return Response({'detail': 'Assessment not found.'}, status=status.HTTP_404_NOT_FOUND)
+   def delete(self, request, assessment_id):
+       """
+       Soft delete a specific Assessment by its ID by marking it as inactive.
+       Returns:
+           Response: The HTTP response with a 204 status if the soft deletion was successful or 404 status if not found.
+       """
+       try:
+           assessment = Assessment.objects.get(assessment_id=assessment_id)
+           assessment.is_active = False  # Soft delete by marking as inactive
+           assessment.save()
+           logger.info(f"Soft deleted Assessment with ID {assessment_id}")
+           return Response({'detail': 'Assessment soft deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+       except Assessment.DoesNotExist:
+           logger.error(f"Assessment with ID {assessment_id} not found for soft deletion")
+           return Response({'detail': 'Assessment not found.'}, status=status.HTTP_404_NOT_FOUND)
+      
 class VirtualMoneyView(APIView):
    """
    Handles creating and listing VirtualMoney instances.
@@ -573,5 +630,6 @@ class AchievementDetailView(APIView):
            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
        except Achievement.DoesNotExist:
            return Response({"error": "Achievement not found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 
