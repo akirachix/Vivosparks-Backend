@@ -21,9 +21,9 @@ from .views import (
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="KolezzaSawaTok API",
+        title="Investika API",
         default_version='v1',
-        description="API documentation for the KolezzaSawaTok project",
+        description="API documentation for the Investika project",
         terms_of_service="https://investika-fed709cc5cec.herokuapp.com/",
         contact=openapi.Contact(email="vivosparks5@gmail.com"),
         license=openapi.License(name="BSD License"),
