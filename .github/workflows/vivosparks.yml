@@ -34,9 +34,6 @@ jobs:
         id: action_black
         run: |
           black .
-          
-      - name: Install corsheaders
-        run: pip install django-cors-headers
         
 
       - name: List files
